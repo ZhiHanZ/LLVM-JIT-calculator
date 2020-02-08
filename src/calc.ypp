@@ -1,0 +1,61 @@
+%{
+#include <string>
+#include <list>
+#include<memory>
+#include<unordered_map>
+
+#include <glog/logging.h>
+#include <iostream>
+#include "include/operators.h"
+using utils::BinaryOperators ;
+extern int yylex(); //lexical analysis and divide line into tokens
+void yyerror(std::string);
+extern std::unordered_map<std::string, double> NamedValueDummy;
+extern std::unordered_map<std::string, BinaryOperators > symbolMap;
+%}
+%union{
+  std::string* value; //used for variable and numbers
+  double expression; //used for evaluation
+}
+
+%token <value> IDENTIFIER DOUBLE_NUM
+%token QUIT
+%right '='
+
+%left GEQ LEQ EQ NE
+
+%left '+' '-'
+
+%left '*' '/' '%'
+
+%type<expression> expression;
+%type<value> identifier;
+%start program
+
+%%
+
+program:
+| program line {std::cout << "[IN]<- ";}
+;
+line: ';' {/*do nothing*/}
+    | expression ';' { std::cout << "evaluation result is " << $1 << std::endl;}
+    | identifier ';' { std::cout << "identifier " + *$1 + " is " << NamedValueDummy[*$1] << std::endl;}
+    | identifier '=' expression { yyerror(*$1); NamedValueDummy[*$1] = $3; delete $1;}
+    | QUIT {LOG(INFO) << "Bye"; exit(0);}
+;
+expression: DOUBLE_NUM {$$ = std::stod(*$1); delete $1;}
+          | identifier {if(NamedValueDummy.find(*$1) == NamedValueDummy.end()) {
+                                                      LOG(ERROR) << "Variable " + *$1 << " not found"; exit(1);} $$ = NamedValueDummy[*$1]; }
+          | '-' expression %prec ';' {$$ = symbolMap["_Z5minusRKdS0_"](0.0, $2);}
+          | expression '+' expression {$$ = symbolMap["_Z3addRKdS0_"]($1, $3);}
+          | expression '-' expression {$$ = symbolMap["_Z5minusRKdS0_"]($1, $3);}
+          | expression '*' expression {$$ = symbolMap["_Z3mulRKdS0_"]($1, $3);}
+          | expression '/' expression {$$ = ($3 == 0.0)? 0 : symbolMap["_Z3divRKdS0_"]($1, $3);}
+          | '(' expression ')' {$$ = $2;}
+identifier:
+IDENTIFIER {$$ = std::move($1);}
+;
+%%
+void yyerror(std::string s) {
+  LOG(INFO) << s;
+}
