@@ -55,3 +55,32 @@ sudo make
 sudo make install prefix=/usr/local/
 sudo apt-get install -y autoconf automake libtool curl make g++ unzip
 ```
+## How to use the current calculator
+### in source dir
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
+### to run the source code
+in build dir
+```bash
+cd source 
+./testTest_run
+``` 
+### to run all unit tests made in gtest
+in build dir
+```bash
+cd tests
+./testTest_tests
+```
+
+### simple way to explain how to use it
+in build dir, run command like (1 + 1) to run the program
+```bash
+cd source 
+./testTest_run
+1 + 1
+``` 
+
