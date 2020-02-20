@@ -37,8 +37,6 @@ using llvm::AllocaInst;
 using llvm::orc::KaleidoscopeJIT;
 extern int yyparse();
 DEFINE_bool(interactive_mode, true, "Include 'advanced' options in the menu listing");
-//auto NamedValue = std::make_shared<std::map<std::string, Value*>>();
-//auto FunctionProto = std::make_shared<std::map<std::string, std::unique_ptr<PrototypeAST>>>();
 auto NamedValueDummy = std::unordered_map<std::string, double>();
 std::unordered_map<std::string, BinaryOperators > symbolMap;
 static const std::string addName {"_Z3addRKdS0_"};
@@ -56,9 +54,12 @@ int main(int argc, char *argv[]) {
   LLVMContext C;
   llvm::SMDiagnostic Err;
   auto TheJIT = std::make_shared<KaleidoscopeJIT>();
+  // in this file contains all four functions' implementation made by clang -S -emit-llvm BasicOperation.cpp
+  // operator's name are named as four static variables
   const std::string fileName {"../../cache/BasicOperators.ll"};
   std::unique_ptr<Module> M = llvm::parseAssemblyFile(fileName, Err, C);
   auto handler = TheJIT->addModule(std::move(M));
+  //find all symbols in llvm symbol table
   auto addExprSymbol = TheJIT->findSymbol(addName);
   double (*add)(const double&, const double&) = (double (*)(const double&, const double&))(intptr_t)cantFail(addExprSymbol.getAddress());
   auto minusExprSymbol = TheJIT->findSymbol(minusName);
